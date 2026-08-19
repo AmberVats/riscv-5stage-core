@@ -7,11 +7,45 @@
 [![Status](https://img.shields.io/badge/Status-Completed%20(All%20Phases)-brightgreen.svg)]()
 [![License](https://img.shields.io/badge/License-MIT-purple.svg)](LICENSE)
 
-A synthesizable, production-ready 5-stage pipelined RV32IM RISC-V processor core in SystemVerilog. Features full RAW data forwarding, load-use hazard stall interlocks, RV32M hardware multiplier/divider, dynamic Gshare branch prediction with BTB, dual AXI4-Lite master memory interfaces, and 125 MHz timing closure constraints on Xilinx Artix-7.
+---
+
+## 📖 Executive Summary & Project Description
+
+The open-standard RISC-V Instruction Set Architecture (ISA) has revolutionized modern compute design. This project implements a synthesizable, high-performance **5-Stage Pipelined RV32IM RISC-V Processor Core** in SystemVerilog, engineered for high clock frequencies and optimal IPC across embedded and SoC application workloads.
+
+The core implements the full unprivileged **RV32I Base Integer ISA** alongside the **RV32M Standard Extension** for hardware multiplication and division. To maximize execution efficiency, the core incorporates a comprehensive **RAW data forwarding network** (EX-to-EX and MEM-to-EX bypasses) eliminating data hazard stalls, an **interlocking hazard detection unit** for load-use dependencies, and a **dynamic Gshare branch predictor with a 64-entry Branch Target Buffer (BTB)** minimizing branch penalty bubbles. Memory connectivity is provided via standard **dual AXI4-Lite master interfaces** (Instruction and Data ports), verified for timing closure at **125 MHz on Xilinx Artix-7 FPGAs**.
 
 ---
 
-## 🏗️ Processor Pipeline Architecture
+## 🌟 Key Architectural Highlights
+
+- **5-Stage In-Order Pipeline:**
+  - **Fetch (IF):** PC generation, dynamic Gshare branch prediction, instruction memory request.
+  - **Decode (ID):** RV32IM instruction decoding, 32x32-bit register file read with internal write-bypass, immediate generation.
+  - **Execute (EX):** 32-bit integer ALU, RV32M multiplier/divider, branch resolution, RAW forwarding multiplexers.
+  - **Memory (MEM):** Byte/halfword/word alignment, sign/zero extension, AXI4-Lite load/store master.
+  - **Write-Back (WB):** Register file commit for ALU, Memory, or Link results.
+
+- **Full RAW Hazard Forwarding & Interlocks:**
+  - **Zero-Bubble Arithmetic:** EX $\to$ EX and MEM $\to$ EX forwarding paths allow back-to-back dependent arithmetic instructions to execute without stalls.
+  - **1-Cycle Load-Use Interlock:** Automatic pipeline stall when a load instruction is immediately followed by a dependent arithmetic instruction.
+  - **Misprediction Recovery:** Single-cycle pipeline flush redirecting PC to correct resolved target address upon branch mispredictions.
+
+- **RV32M Hardware Math Unit:**
+  - Full support for `MUL`, `MULH`, `MULHSU`, `MULHU`, `DIV`, `DIVU`, `REM`, `REMU`.
+  - Complete compliance with RISC-V ISA corner cases (e.g., division by zero and signed overflow handling).
+
+- **Dynamic Gshare Branch Predictor:**
+  - 2-bit Saturating Counters indexed by PC hash XOR Global History Register (GHR).
+  - 64-entry Branch Target Buffer (BTB) for single-cycle branch redirection.
+
+- **Industry-Standard Bus Protocols & Timing:**
+  - Dual AXI4-Lite Master ports for clean decoupling of instruction and data memories.
+  - SDC / XDC timing constraints targeting **125 MHz** on Xilinx Artix-7 (XC7A100T) with zero setup/hold timing violations.
+
+---
+
+## 🏗️ Processor Pipeline Block Diagram
 
 ```
  +-----------------------------------------------------------------------------------+
@@ -59,7 +93,7 @@ riscv-5stage-core/
 
 ---
 
-## 🚦 Roadmap & Implementation Phases
+## 🚦 Implementation & Verification Status
 
 - [x] **Phase 3.1: 5-Stage RV32I Datapath**
   - [x] Instruction Fetch, Decode, Execute, Memory, Write-back pipeline
@@ -83,7 +117,7 @@ riscv-5stage-core/
 
 ## 🔬 Running Simulations
 
-Run the complete self-checking testbench:
+Run the complete self-checking testbench (executes RV32I arithmetic, RV32M multiply/divide, load-use stalls, forwarding validation, and memory operations):
 ```bash
 cd tb
 iverilog -g2012 -o sim_riscv_core ../rtl/*.sv tb_riscv_core.sv
